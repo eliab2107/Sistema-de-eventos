@@ -1,11 +1,65 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+}
+
+model Evento {
+  id            String         @id @default(uuid())
+  nome          String
+  data          DateTime
+  local         String
+  status        String         // "Ativo" ou "Encerrado"
+  
+  // Relações
+  inscricoes    Inscricao[]    // Relação N:N com Participantes
+  regras        RegraEvento[]  // Relação 1:N (Regra é exclusiva deste evento)
+}
+
+model Participante {
+  id         String      @id @default(uuid())
+  nome       String
+  email      String      @unique
+  
+  // Um participante pode estar em vários eventos
+  inscricoes Inscricao[]
+}
+
+// Tabela de Junção (Pivot) entre Evento e Participante
+model Inscricao {
+  id             String       @id @default(uuid())
+  checkIn        Boolean      @default(false)
+  dataInscricao  DateTime     @default(now())
+  
+  eventoId       String
+  evento         Evento       @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  
+  participanteId String
+  participante   Participante @relation(fields: [participanteId], references: [id], onDelete: Cascade)
+
+  // Garante que o mesmo participante não se inscreva 2x no mesmo evento
+  @@unique([eventoId, participanteId])
+}
+
+model RegraEvento {
+  id            String   @id @default(uuid())
+  nome          String   // ex: "QR Code", "Documento"
+  minutosAntes  Int
+  minutosDepois Int
+  obrigatorio   Boolean  @default(true)
+  ativa         Boolean  @default(true)
+  criadoEm      DateTime @default(now())
+  
+  eventoId      String
+  evento        Evento   @relation(fields: [eventoId], references: [id], onDelete: Cascade)
 }
