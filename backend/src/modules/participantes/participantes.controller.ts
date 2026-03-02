@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import participantesService from './participantes.service'
+import { AuthRequest } from '../../middleware/auth.middleware'
 
 class ParticipantesController {
   async list(req: Request, res: Response) {
@@ -64,12 +65,14 @@ class ParticipantesController {
     try {
       const { id } = req.params as { id: string }
       const { eventoId } = req.body
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
 
       if (!eventoId) {
         return res.status(400).json({ message: 'eventoId is required' })
       }
 
-      const inscricao = await participantesService.inscrever(id, eventoId)
+      const inscricao = await participantesService.inscrever(id, eventoId, userId!)
       res.status(201).json(inscricao)
     } catch (error: any) {
       if (error.statusCode) {
@@ -83,12 +86,14 @@ class ParticipantesController {
     try {
       const { id } = req.params as { id: string }
       const { eventoOrigemId, eventoDestinoId } = req.body
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
 
       if (!eventoOrigemId || !eventoDestinoId) {
         return res.status(400).json({ message: 'eventoOrigemId and eventoDestinoId are required' })
       }
 
-      const inscricao = await participantesService.transferir(id, eventoOrigemId, eventoDestinoId)
+      const inscricao = await participantesService.transferir(id, eventoOrigemId, eventoDestinoId, userId!)
       res.json(inscricao)
     } catch (error: any) {
       if (error.statusCode) {
@@ -102,12 +107,14 @@ class ParticipantesController {
     try {
       const { id } = req.params as { id: string }
       const { eventoId, checkIn } = req.body
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
 
       if (!eventoId || checkIn === undefined) {
         return res.status(400).json({ message: 'eventoId and checkIn are required' })
       }
 
-      const inscricao = await participantesService.checkin(id, eventoId, checkIn)
+      const inscricao = await participantesService.checkin(id, eventoId, checkIn, userId!)
       res.json(inscricao)
     } catch (error: any) {
       if (error.statusCode) {

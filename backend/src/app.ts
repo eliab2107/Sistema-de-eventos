@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import authRoutes from './modules/auth/auth.routes'
+import userRoutes from './modules/user/user.routes'
 import eventosRoutes from './modules/eventos/eventos.routes'
 import participantesRoutes from './modules/participantes/participantes.routes'
 import dashboardRoutes from './modules/dashboard/dashboard.routes'
@@ -15,6 +16,7 @@ app.use(express.json())
 
 // Public routes
 app.use('/auth', authRoutes)
+app.use('/users', userRoutes)  // registration
 
 // Protected routes
 //app.use(authMiddleware)

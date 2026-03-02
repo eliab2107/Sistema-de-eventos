@@ -1,11 +1,14 @@
 import { Request, Response } from 'express'
 import regrasCheckinService from './regrasCheckin.service'
+import { AuthRequest } from '../../middleware/auth.middleware'
 
 class RegrasCheckinController {
   async list(req: Request, res: Response) {
     try {
       const { eventoId } = req.params as { eventoId: string }
-      const regras = await regrasCheckinService.list(eventoId)
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
+      const regras = await regrasCheckinService.list(eventoId, userId!)
       res.json(regras)
     } catch (error: any) {
       if (error.statusCode) {
@@ -18,13 +21,15 @@ class RegrasCheckinController {
   async create(req: Request, res: Response) {
     try {
       const { eventoId } = req.params as { eventoId: string }
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
       const { nome, minutosAntes, minutosDepois, obrigatorio, ativa } = req.body
 
       if (!nome || minutosAntes === undefined || minutosDepois === undefined) {
         return res.status(400).json({ message: 'nome, minutosAntes and minutosDepois are required' })
       }
 
-      const regra = await regrasCheckinService.create(eventoId, {
+      const regra = await regrasCheckinService.create(eventoId, userId!, {
         nome,
         minutosAntes,
         minutosDepois,
@@ -44,9 +49,11 @@ class RegrasCheckinController {
   async update(req: Request, res: Response) {
     try {
       const { eventoId, id } = req.params as { eventoId: string; id: string }
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
       const { nome, minutosAntes, minutosDepois, obrigatorio, ativa } = req.body
 
-      const regra = await regrasCheckinService.update(eventoId, id, {
+      const regra = await regrasCheckinService.update(eventoId, id, userId!, {
         nome,
         minutosAntes,
         minutosDepois,
@@ -66,7 +73,9 @@ class RegrasCheckinController {
   async delete(req: Request, res: Response) {
     try {
       const { eventoId, id } = req.params as { eventoId: string; id: string }
-      await regrasCheckinService.delete(eventoId, id)
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
+      await regrasCheckinService.delete(eventoId, id, userId!)
       res.status(204).send()
     } catch (error: any) {
       if (error.statusCode) {

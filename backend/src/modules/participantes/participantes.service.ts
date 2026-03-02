@@ -105,7 +105,7 @@ class ParticipantesService {
     })
   }
 
-  async inscrever(participanteId: string, eventoId: string): Promise<InscricaoResponse> {
+  async inscrever(participanteId: string, eventoId: string, userId: string): Promise<InscricaoResponse> {
 
     const participante = await prisma.participante.findUnique({
       where: { id: participanteId }
@@ -120,7 +120,7 @@ class ParticipantesService {
       where: { id: eventoId }
     })
 
-    if (!evento) {
+    if (!evento || evento.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
 
@@ -147,7 +147,7 @@ class ParticipantesService {
     return mapInscricao(inscricao)
   }
 
-  async transferir(participanteId: string, eventoOrigemId: string, eventoDestinoId: string): Promise<InscricaoResponse> {
+  async transferir(participanteId: string, eventoOrigemId: string, eventoDestinoId: string, userId: string): Promise<InscricaoResponse> {
     const participante = await prisma.participante.findUnique({
       where: { id: participanteId }
     })
@@ -161,7 +161,7 @@ class ParticipantesService {
       where: { id: eventoOrigemId }
     })
 
-    if (!eventoOrigem) {
+    if (!eventoOrigem || eventoOrigem.creatorId !== userId) {
       throw { statusCode: 404, message: 'Origem evento not found' }
     }
 
@@ -170,7 +170,7 @@ class ParticipantesService {
       where: { id: eventoDestinoId }
     })
 
-    if (!eventoDestino) {
+    if (!eventoDestino || eventoDestino.creatorId !== userId) {
       throw { statusCode: 404, message: 'Destino evento not found' }
     }
 
@@ -217,8 +217,14 @@ class ParticipantesService {
     return mapInscricao(novaInscricao)
   }
 
-  async checkin(participanteId: string, eventoId: string, checkIn: boolean): Promise<InscricaoResponse> {
+  async checkin(participanteId: string, eventoId: string, checkIn: boolean, userId: string): Promise<InscricaoResponse> {
     
+    const evento = await prisma.evento.findUnique({ where: { id: eventoId } })
+
+    if (!evento || evento.creatorId !== userId) {
+      throw { statusCode: 404, message: 'Evento not found' }
+    }
+
     const inscricao = await prisma.inscricao.findUnique({
       where: {
         eventoId_participanteId: {

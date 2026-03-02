@@ -65,8 +65,8 @@ function mapEvento(evento: any): EventoResponse {
 }
 
 class EventosService {
-  async list(filters: ListFilters): Promise<EventoResponse[]> {
-    const where: any = {}
+  async list(filters: ListFilters, userId: string): Promise<EventoResponse[]> {
+    const where: any = { creatorId: userId }
 
     if (filters.nome) {
       where.nome = {
@@ -98,19 +98,17 @@ class EventosService {
     return eventos.map(mapEvento)
   }
 
-  async getById(id: string): Promise<EventoResponse> {
-    const evento = await prisma.evento.findUnique({
-      where: { id }
-    })
+  
 
-    if (!evento) {
+  async getById(id: string, userId: string): Promise<EventoResponse> {
+    const evento = await prisma.evento.findUnique({ where: { id } })
+    if (!evento || evento.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
-
     return mapEvento(evento)
   }
 
-  async create(data: CreateEventoRequest): Promise<EventoResponse> {
+  async create(data: CreateEventoRequest, userId: string): Promise<EventoResponse> {
     // Validate status
     if (!['Ativo', 'Encerrado'].includes(data.status)) {
       throw { statusCode: 400, message: 'Status must be "Ativo" or "Encerrado"' }
@@ -127,20 +125,21 @@ class EventosService {
         nome: data.nome,
         data: date,
         local: data.local,
-        status: data.status
+        status: data.status,
+        creatorId: userId
       }
     })
 
     return mapEvento(evento)
   }
 
-  async update(id: string, data: UpdateEventoRequest): Promise<EventoResponse> {
+  async update(id: string, data: UpdateEventoRequest, userId: string): Promise<EventoResponse> {
     
     const existing = await prisma.evento.findUnique({
       where: { id }
     })
 
-    if (!existing) {
+    if (!existing || existing.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
 
@@ -171,13 +170,13 @@ class EventosService {
     return mapEvento(evento)
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, userId: string): Promise<void> {
     
     const existing = await prisma.evento.findUnique({
       where: { id }
     })
 
-    if (!existing) {
+    if (!existing || existing.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
 
@@ -186,7 +185,7 @@ class EventosService {
     })
   }
 
-  async getCompleto(id: string): Promise<EventoCompleto> {
+  async getCompleto(id: string, userId: string): Promise<EventoCompleto> {
     
     const evento = await prisma.evento.findUnique({
       where: { id },
@@ -200,7 +199,7 @@ class EventosService {
       }
     })
 
-    if (!evento) {
+    if (!evento || evento.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
 

@@ -1,10 +1,13 @@
 import { Request, Response } from 'express'
 import dashboardService from './dashboard.service'
+import { AuthRequest } from '../../middleware/auth.middleware'
 
 class DashboardController {
   async get(req: Request, res: Response) {
     try {
-      const data = await dashboardService.getDashboard()
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
+      const data = await dashboardService.getDashboard(userId!)
       res.json(data)
     } catch (error: any) {
       if (error.statusCode) {

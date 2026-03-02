@@ -44,17 +44,18 @@ function mapInscricao(inscricao: any): InscricaoResponse {
 }
 
 class DashboardService {
-  async getDashboard(): Promise<DashboardResponse> {
+  async getDashboard(userId: string): Promise<DashboardResponse> {
     const [
       totalEventos,
       totalParticipantes,
       proximosEventos,
       ultimosCheckins
     ] = await Promise.all([
-      prisma.evento.count(),
+      prisma.evento.count({ where: { creatorId: userId } }),
       prisma.participante.count(),
       prisma.evento.findMany({
         where: {
+          creatorId: userId,
           data: {
             gte: new Date()
           }
@@ -63,6 +64,11 @@ class DashboardService {
         take: 5
       }),
       prisma.inscricao.findMany({
+        where: {
+          evento: {
+            creatorId: userId
+          }
+        },
         orderBy: { dataInscricao: 'desc' },
         take: 5
       })

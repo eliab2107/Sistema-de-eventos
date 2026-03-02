@@ -57,13 +57,13 @@ function temConflito(regra1: { minutosAntes: number; minutosDepois: number }, re
 }
 
 class RegrasCheckinService {
-  async list(eventoId: string): Promise<RegraResponse[]> {
+  async list(eventoId: string, userId: string): Promise<RegraResponse[]> {
     // Check if evento exists
     const evento = await prisma.evento.findUnique({
       where: { id: eventoId }
     })
 
-    if (!evento) {
+    if (!evento || evento.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
 
@@ -74,13 +74,12 @@ class RegrasCheckinService {
     return regras.map(mapRegra)
   }
 
-  async create(eventoId: string, data: CreateRegraRequest): Promise<RegraResponse> {
+  async create(eventoId: string, userId: string, data: CreateRegraRequest): Promise<RegraResponse> {
     // Check if evento exists
     const evento = await prisma.evento.findUnique({
       where: { id: eventoId }
     })
-
-    if (!evento) {
+    if (!evento || evento.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
 
@@ -118,13 +117,13 @@ class RegrasCheckinService {
     return mapRegra(regra)
   }
 
-  async update(eventoId: string, id: string, data: UpdateRegraRequest): Promise<RegraResponse> {
+  async update(eventoId: string, id: string, userId: string, data: UpdateRegraRequest): Promise<RegraResponse> {
     // Check if evento exists
     const evento = await prisma.evento.findUnique({
       where: { id: eventoId }
     })
 
-    if (!evento) {
+    if (!evento || evento.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
 
@@ -195,13 +194,13 @@ class RegrasCheckinService {
     return mapRegra(updated)
   }
 
-  async delete(eventoId: string, id: string): Promise<void> {
+  async delete(eventoId: string, id: string, userId: string): Promise<void> {
     // Check if evento exists
     const evento = await prisma.evento.findUnique({
       where: { id: eventoId }
     })
 
-    if (!evento) {
+    if (!evento || evento.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
     }
 

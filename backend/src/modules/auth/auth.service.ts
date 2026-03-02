@@ -12,6 +12,7 @@ interface LoginResponse {
   user: {
     id: string
     email: string
+    nome?: string
   }
 }
 
@@ -36,7 +37,7 @@ class AuthService {
     // Generate token
     const secret = process.env.JWT_SECRET || 'secret'
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, nome: user.nome },
       secret,
       { expiresIn: '1h' }
     )
@@ -46,6 +47,7 @@ class AuthService {
       user: {
         id: user.id,
         email: user.email
+        ,nome: user.nome
       }
     }
   }
