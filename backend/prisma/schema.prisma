@@ -12,6 +12,10 @@ model User {
   id       String @id @default(uuid())
   email    String @unique
   password String
+  nome     String
+
+  /// eventos criados pelo usuário
+  eventos   Evento[]
 }
 
 model Evento {
@@ -21,6 +25,10 @@ model Evento {
   local         String
   status        String         // "Ativo" ou "Encerrado"
   
+  // Quem criou o evento
+  creatorId     String
+  creator       User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
   // Relações
   inscricoes    Inscricao[]    // Relação N:N com Participantes
   regras        RegraEvento[]  // Relação 1:N (Regra é exclusiva deste evento)
