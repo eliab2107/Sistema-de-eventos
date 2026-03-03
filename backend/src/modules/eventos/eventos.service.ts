@@ -229,6 +229,31 @@ class EventosService {
       regras
     }
   }
+
+    async removeInscricao(eventoId: string, inscricaoId: string, userId: string): Promise<void> {
+      // Verify user owns the event
+      const evento = await prisma.evento.findUnique({
+        where: { id: eventoId }
+      })
+
+      if (!evento || evento.creatorId !== userId) {
+        throw { statusCode: 404, message: 'Evento not found' }
+      }
+
+      // Verify inscription exists and belongs to this event
+      const inscricao = await prisma.inscricao.findUnique({
+        where: { id: inscricaoId }
+      })
+
+      if (!inscricao || inscricao.eventoId !== eventoId) {
+        throw { statusCode: 404, message: 'Inscription not found' }
+      }
+
+      // Delete the inscription
+      await prisma.inscricao.delete({
+        where: { id: inscricaoId }
+      })
+    }
 }
 
 export default new EventosService()

@@ -11,5 +11,6 @@ router.get('/:id', authMiddleware, (req, res) => eventosController.getById(req, 
 router.post('/', authMiddleware, (req, res) => eventosController.create(req, res))
 router.put('/:id', authMiddleware, (req, res) => eventosController.update(req, res))
 router.delete('/:id', authMiddleware, (req, res) => eventosController.delete(req, res))
+router.delete('/:eventoId/inscricoes/:inscricaoId', authMiddleware, (req, res) => eventosController.removeInscricao(req, res))
 
 export default router

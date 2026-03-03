@@ -109,6 +109,22 @@ class EventosController {
       res.status(500).json({ message: 'Internal server error' })
     }
   }
+
+    async removeInscricao(req: Request, res: Response) {
+      try {
+        const { eventoId, inscricaoId } = req.params as { eventoId: string; inscricaoId: string }
+        const authReq = req as AuthRequest
+        const userId = authReq.userId
+
+        await eventosService.removeInscricao(eventoId, inscricaoId, userId!)
+        res.status(204).send()
+      } catch (error: any) {
+        if (error.statusCode) {
+          return res.status(error.statusCode).json({ message: error.message })
+        }
+        res.status(500).json({ message: 'Internal server error' })
+      }
+    }
 }
 
 export default new EventosController()
