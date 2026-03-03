@@ -24,6 +24,22 @@ async function main() {
   } else {
     console.log('Admin user already exists')
   }
+
+  // seed default rule types
+  const tipos = [
+    'QR Code',
+    'Documento',
+    'Lista Impressa',
+    'Confirmação por Email'
+  ];
+
+  for (const nome of tipos) {
+    const existing = await prisma.tipoRegra.findUnique({ where: { nome } });
+    if (!existing) {
+      await prisma.tipoRegra.create({ data: { nome } });
+      console.log(`Tipo de regra '${nome}' criado`);
+    }
+  }
 }
 
 main()

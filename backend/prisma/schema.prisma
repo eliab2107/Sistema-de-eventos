@@ -61,7 +61,7 @@ model Inscricao {
 
 model RegraEvento {
   id            String   @id @default(uuid())
-  nome          String   // ex: "QR Code", "Documento"
+  nome          String   // ex: "QR Code", "Documento" (pode ser preenchido automaticamente pelo tipo)
   minutosAntes  Int
   minutosDepois Int
   obrigatorio   Boolean  @default(true)
@@ -70,4 +70,15 @@ model RegraEvento {
   
   eventoId      String
   evento        Evento   @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  // referência ao tipo de regra
+  tipoRegraId   String
+  tipoRegra     TipoRegra @relation(fields: [tipoRegraId], references: [id])
+}
+
+model TipoRegra {
+  id    String  @id @default(uuid())
+  nome  String  @unique
+
+  regras RegraEvento[]
 }

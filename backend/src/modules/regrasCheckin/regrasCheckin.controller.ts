@@ -23,13 +23,14 @@ class RegrasCheckinController {
       const { eventoId } = req.params as { eventoId: string }
       const authReq = req as AuthRequest
       const userId = authReq.userId
-      const { nome, minutosAntes, minutosDepois, obrigatorio, ativa } = req.body
+      const { tipoRegraId, nome, minutosAntes, minutosDepois, obrigatorio, ativa } = req.body
 
-      if (!nome || minutosAntes === undefined || minutosDepois === undefined) {
-        return res.status(400).json({ message: 'nome, minutosAntes and minutosDepois are required' })
+      if (!tipoRegraId || minutosAntes === undefined || minutosDepois === undefined) {
+        return res.status(400).json({ message: 'tipoRegraId, minutosAntes and minutosDepois are required' })
       }
 
       const regra = await regrasCheckinService.create(eventoId, userId!, {
+        tipoRegraId,
         nome,
         minutosAntes,
         minutosDepois,
@@ -51,9 +52,10 @@ class RegrasCheckinController {
       const { eventoId, id } = req.params as { eventoId: string; id: string }
       const authReq = req as AuthRequest
       const userId = authReq.userId
-      const { nome, minutosAntes, minutosDepois, obrigatorio, ativa } = req.body
+      const { tipoRegraId, nome, minutosAntes, minutosDepois, obrigatorio, ativa } = req.body
 
       const regra = await regrasCheckinService.update(eventoId, id, userId!, {
+        tipoRegraId,
         nome,
         minutosAntes,
         minutosDepois,
@@ -81,6 +83,15 @@ class RegrasCheckinController {
       if (error.statusCode) {
         return res.status(error.statusCode).json({ message: error.message })
       }
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  async listTipos(req: Request, res: Response) {
+    try {
+      const tipos = await regrasCheckinService.listTipos()
+      res.json(tipos)
+    } catch (error: any) {
       res.status(500).json({ message: 'Internal server error' })
     }
   }

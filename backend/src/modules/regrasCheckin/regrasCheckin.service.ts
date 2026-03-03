@@ -1,5 +1,10 @@
 import prisma from '../../prisma'
 
+interface TipoRegra {
+  id: string
+  nome: string
+}
+
 interface RegraResponse {
   id: string
   nome: string
@@ -9,10 +14,14 @@ interface RegraResponse {
   ativa: boolean
   criadoEm: string
   eventoId: string
+  // nova propriedade para indicar o tipo associado
+  tipoRegraId: string
+  tipoRegra?: TipoRegra
 }
 
 interface CreateRegraRequest {
-  nome: string
+  tipoRegraId: string
+  nome?: string // opcional, pode ser definido pelo tipo
   minutosAntes: number
   minutosDepois: number
   obrigatorio: boolean
@@ -20,6 +29,7 @@ interface CreateRegraRequest {
 }
 
 interface UpdateRegraRequest {
+  tipoRegraId?: string
   nome?: string
   minutosAntes?: number
   minutosDepois?: number
@@ -36,7 +46,9 @@ function mapRegra(regra: any): RegraResponse {
     obrigatorio: regra.obrigatorio,
     ativa: regra.ativa,
     criadoEm: regra.criadoEm.toISOString(),
-    eventoId: regra.eventoId
+    eventoId: regra.eventoId,
+    tipoRegraId: regra.tipoRegraId,
+    tipoRegra: regra.tipoRegra ? { id: regra.tipoRegra.id, nome: regra.tipoRegra.nome } : undefined
   }
 }
 
@@ -68,7 +80,8 @@ class RegrasCheckinService {
     }
 
     const regras = await prisma.regraEvento.findMany({
-      where: { eventoId }
+      where: { eventoId },
+      include: { tipoRegra: true }
     })
 
     return regras.map(mapRegra)
@@ -81,6 +94,12 @@ class RegrasCheckinService {
     })
     if (!evento || evento.creatorId !== userId) {
       throw { statusCode: 404, message: 'Evento not found' }
+    }
+
+    // verify tipoRegra exists
+    const tipo = await prisma.tipoRegra.findUnique({ where: { id: data.tipoRegraId } });
+    if (!tipo) {
+      throw { statusCode: 400, message: 'Tipo de regra inválido' };
     }
 
     // If this rule is mandatory, check for conflicts
@@ -105,13 +124,15 @@ class RegrasCheckinService {
 
     const regra = await prisma.regraEvento.create({
       data: {
-        nome: data.nome,
+        nome: data.nome ?? tipo.nome,
         minutosAntes: data.minutosAntes,
         minutosDepois: data.minutosDepois,
         obrigatorio: data.obrigatorio,
         ativa: data.ativa,
-        eventoId
-      }
+        eventoId,
+        tipoRegraId: data.tipoRegraId
+      },
+      include: { tipoRegra: true }
     })
 
     return mapRegra(regra)
@@ -180,6 +201,13 @@ class RegrasCheckinService {
     }
 
     const updateData: any = {}
+    if (data.tipoRegraId) {
+      const tipo = await prisma.tipoRegra.findUnique({ where: { id: data.tipoRegraId } });
+      if (!tipo) throw { statusCode: 400, message: 'Tipo de regra inválido' };
+      updateData.tipoRegraId = data.tipoRegraId;
+      // optionally update name if not provided
+      if (!data.nome) updateData.nome = tipo.nome;
+    }
     if (data.nome) updateData.nome = data.nome
     if (data.minutosAntes !== undefined) updateData.minutosAntes = data.minutosAntes
     if (data.minutosDepois !== undefined) updateData.minutosDepois = data.minutosDepois
@@ -188,10 +216,15 @@ class RegrasCheckinService {
 
     const updated = await prisma.regraEvento.update({
       where: { id },
-      data: updateData
+      data: updateData,
+      include: { tipoRegra: true }
     })
 
     return mapRegra(updated)
+  }
+
+  async listTipos(): Promise<TipoRegra[]> {
+    return await prisma.tipoRegra.findMany();
   }
 
   async delete(eventoId: string, id: string, userId: string): Promise<void> {

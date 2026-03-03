@@ -20,8 +20,13 @@ interface Regra {
   minutosDepois: number;
   obrigatorio: boolean;
   ativa: boolean;
-  criadoEm?: string;
+  criadoEm?: string;  tipoRegraId: string
+  tipoRegra?: TipoRegra
 }
+
+interface TipoRegra {
+  id: string
+  nome: string}
 
 interface Evento {
   id: string;
@@ -62,7 +67,9 @@ export function EventoModal({ isOpen, onClose, evento, onSuccess }: EventoModalP
 
   // Rules Tab State
   const [regras, setRegras] = useState<Regra[]>([]);
+  const [tiposRegra, setTiposRegra] = useState<TipoRegra[]>([])
   const [ruleForm, setRuleForm] = useState({
+    tipoRegraId: '',
     nome: '',
     minutosAntes: 0,
     minutosDepois: 0,
@@ -104,11 +111,21 @@ export function EventoModal({ isOpen, onClose, evento, onSuccess }: EventoModalP
       setRegras(regrasResp);
 
       await loadParticipantes();
+      await loadTiposRegra();
     } catch (err) {
       setError('Erro ao carregar evento');
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTiposRegra = async () => {
+    try {
+      const response = await api.get('/eventos/tipos');
+      setTiposRegra(response.data || []);
+    } catch (err) {
+      console.error('Erro ao carregar tipos de regra:', err);
     }
   };
 
@@ -188,20 +205,45 @@ export function EventoModal({ isOpen, onClose, evento, onSuccess }: EventoModalP
   };
 
   // Rules Handlers
-  const handleRuleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, type, value, checked } = e.target;
-    setRuleForm(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : (name.includes('minutos') ? parseInt(value) : value),
-    }));
+  const handleRuleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, type, value, checked } = e.target as any;
+    let inputValue: any;
+    
+    if (type === 'checkbox') {
+      inputValue = checked;
+    } else if (name.includes('minutos')) {
+      inputValue = parseInt(value);
+    } else {
+      inputValue = value;
+    }
+    
+    setRuleForm(prev => {
+      const updated = { ...prev, [name]: inputValue };
+      
+      // Auto-fill nome from tipo when tipoRegraId changes
+      if (name === 'tipoRegraId' && !prev.nome) {
+        const selectedTipo = tiposRegra.find(t => t.id === inputValue);
+        if (selectedTipo) {
+          updated.nome = selectedTipo.nome;
+        }
+      }
+      
+      return updated;
+    });
   };
 
   const handleAddRule = async () => {
+    if (!ruleForm.tipoRegraId) {
+      setError('Selecione um tipo de regra');
+      return;
+    }
+
     try {
       setError('');
       setLoadingRegras(true);
 
       await api.post(`/eventos/${evento?.id}/regras-checkin`, {
+        tipoRegraId: ruleForm.tipoRegraId,
         nome: ruleForm.nome,
         minutosAntes: ruleForm.minutosAntes,
         minutosDepois: ruleForm.minutosDepois,
@@ -210,6 +252,7 @@ export function EventoModal({ isOpen, onClose, evento, onSuccess }: EventoModalP
       });
 
       setRuleForm({
+        tipoRegraId: '',
         nome: '',
         minutosAntes: 0,
         minutosDepois: 0,
@@ -469,13 +512,30 @@ export function EventoModal({ isOpen, onClose, evento, onSuccess }: EventoModalP
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Regra</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Regra*</label>
+                    <select
+                      name="tipoRegraId"
+                      value={ruleForm.tipoRegraId}
+                      onChange={handleRuleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Selecione um tipo...</option>
+                      {tiposRegra.map(tipo => (
+                        <option key={tipo.id} value={tipo.id}>
+                          {tipo.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Regra (Personalizado)</label>
                     <input
                       type="text"
                       name="nome"
                       value={ruleForm.nome}
                       onChange={handleRuleInputChange}
-                      placeholder="Ex: Check-in Antecipado"
+                      placeholder="Deixe em branco para usar o nome do tipo"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -530,7 +590,7 @@ export function EventoModal({ isOpen, onClose, evento, onSuccess }: EventoModalP
 
                   <button
                     onClick={handleAddRule}
-                    disabled={loadingRegras || !ruleForm.nome}
+                    disabled={loadingRegras || !ruleForm.tipoRegraId}
                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium flex items-center justify-center gap-2"
                   >
                     <Plus size={18} />
@@ -552,8 +612,15 @@ export function EventoModal({ isOpen, onClose, evento, onSuccess }: EventoModalP
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
                       >
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{regra.nome}</p>
-                          <p className="text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900">{regra.nome}</p>
+                            {regra.tipoRegra && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                {regra.tipoRegra.nome}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">
                             {regra.minutosAntes}min antes • {regra.minutosDepois}min depois
                             {regra.obrigatorio && ' • Obrigatório'}
                             {!regra.ativa && ' • Inativa'}

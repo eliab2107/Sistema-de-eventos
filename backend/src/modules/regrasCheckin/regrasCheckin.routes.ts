@@ -4,6 +4,8 @@ import authMiddleware from '../../middleware/auth.middleware'
 
 const router = Router()
 
+router.get('/tipos', authMiddleware, (req, res) => regrasCheckinController.listTipos(req, res))
+
 router.get('/:eventoId/regras-checkin', authMiddleware, (req, res) => regrasCheckinController.list(req, res))
 
 router.post('/:eventoId/regras-checkin', authMiddleware, (req, res) => regrasCheckinController.create(req, res))
