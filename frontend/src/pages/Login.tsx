@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const Login = () => {
+const Login: React.FC = () => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const successMessage = location.state?.successMessage;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -43,6 +46,11 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {successMessage && (
+              <div className="bg-green-50 border-l-4 border-green-500 p-3">
+                <p className="text-green-700 text-sm font-medium">{successMessage}</p>
+              </div>
+            )}
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 p-3">
                 <p className="text-red-700 text-sm font-medium">{error}</p>
@@ -89,6 +97,15 @@ const Login = () => {
               ) : 'Entrar'}
             </button>
           </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 text-sm">
+              Não tem uma conta?{' '}
+              <Link to="/register" className="font-semibold text-blue-600 hover:underline">
+                Cadastre-se
+              </Link>
+            </p>
+          </div>
 
           <p className="mt-8 text-center text-xs text-gray-400">
             &copy; 2026 EventMaster - Todos os direitos reservados.

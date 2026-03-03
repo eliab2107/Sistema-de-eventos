@@ -1,6 +1,21 @@
 import { CalendarClock, MapPin } from 'lucide-react';
 
-export function EventsCard({ eventos = [] }) {
+interface EventItem {
+  id: string;
+  nome: string;
+  data: string;
+  local?: string;
+  status: string;
+  horario?: string;
+  inscricoes?: any[];
+  regras?: any[];
+}
+
+interface EventsCardProps {
+  eventos?: EventItem[];
+}
+
+export function EventsCard({ eventos = [] }: EventsCardProps) {
   // Pegamos apenas os 3 primeiros eventos da lista
   const nextEvents = eventos.slice(0, 3);
 
@@ -36,9 +51,6 @@ export function EventsCard({ eventos = [] }) {
                   {event.status}
                 </span>
               </div>
-              
-             
-    
               </div>
           ))
         ) : (

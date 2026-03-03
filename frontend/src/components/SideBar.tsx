@@ -1,14 +1,30 @@
 import { useState } from 'react';
 import { LayoutDashboard, Calendar, Users, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { theme } from '../constants/theme';
+
+interface NavLink {
+  path: string;
+  icon: React.ComponentType<{ size?: number }>; // lucide icons
+  label: string;
+}
 
 export function Sidebar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleSidebar = () => setIsOpen(!isOpen);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const navLinks: NavLink[] = [
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/eventos', icon: Calendar, label: 'Eventos' },
+    { path: '/participantes', icon: Users, label: 'Participantes' },
+  ];
 
   return (
     <>
@@ -30,7 +46,7 @@ export function Sidebar() {
 
       {/* Sidebar - Fixa no Desktop, Deslizante no Mobile */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-white border-r transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
         md:relative md:translate-x-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         flex flex-col
@@ -40,21 +56,25 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 px-4 space-y-2">
-          <Link to="/dashboard" className="flex items-center gap-3 p-3 bg-blue-50 text-blue-700 rounded-xl font-medium">
-            <LayoutDashboard size={20} /> Dashboard
-          </Link>
-          <Link to="/eventos" className="flex items-center gap-3 p-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
-            <Calendar size={20} /> Eventos
-          </Link>
-          <Link to="/participantes" className="flex items-center gap-3 p-3 text-gray-600 hover:bg-gray-50 rounded-xl transition">
-            <Users size={20} /> Participantes
-          </Link>
+          {navLinks.map(({ path, icon: Icon, label }) => (
+            <Link
+              key={path}
+              to={path}
+              className={`flex items-center gap-3 p-3 rounded-xl font-medium transition ${
+                isActive(path)
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Icon size={20} /> {label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="p-4 border-t">
+        <div className="p-4 border-t border-gray-200 bg-gradient-to-t from-gray-50 to-white">
           <button 
             onClick={() => { logout(); navigate('/'); }}
-            className="w-full flex items-center gap-3 p-3 text-red-600 hover:bg-red-50 rounded-xl transition font-medium"
+            className="w-full flex items-center gap-3 p-3 text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
           >
             <LogOut size={20} /> Sair
           </button>
