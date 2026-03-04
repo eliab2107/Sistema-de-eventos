@@ -4,21 +4,27 @@ interface ParticipanteResponse {
   id: string
   nome: string
   email: string
+  creatorId: string
+  inscricoes: InscricaoResponse[]
 }
 
 interface InscricaoResponse {
   id: string
   eventoId: string
   participanteId: string
-  checkIn: boolean
+  fezCheckin: boolean
   dataInscricao: string
+  nomeEvento?: string | undefined
+  dataEvento?: string | undefined
 }
 
 function mapParticipante(participante: any): ParticipanteResponse {
   return {
     id: participante.id,
     nome: participante.nome,
-    email: participante.email
+    email: participante.email,
+    creatorId: participante.creatorId,
+    inscricoes: participante.inscricoes ? participante.inscricoes.map((i: any) => mapInscricao(i)) : [],
   }
 }
 
@@ -27,8 +33,8 @@ function mapInscricao(inscricao: any): InscricaoResponse {
     id: inscricao.id,
     eventoId: inscricao.eventoId,
     participanteId: inscricao.participanteId,
-    checkIn: inscricao.checkIn,
-    dataInscricao: inscricao.dataInscricao.toISOString()
+    fezCheckin: inscricao.checkIn,
+    dataInscricao: inscricao.dataInscricao ? inscricao.dataInscricao.toISOString() : new Date().toISOString()
   }
 }
 
@@ -38,7 +44,7 @@ class ParticipantesService {
     return participantes.map(mapParticipante)
   }
 
-  async create(data: { nome: string; email: string }): Promise<ParticipanteResponse> {
+  async create(data: { nome: string; email: string; creatorId: string}): Promise<ParticipanteResponse> {
     // Check if email already exists
     const existing = await prisma.participante.findUnique({
       where: { email: data.email }
@@ -51,7 +57,8 @@ class ParticipantesService {
     const participante = await prisma.participante.create({
       data: {
         nome: data.nome,
-        email: data.email
+        email: data.email,
+        creatorId: data.creatorId ?? null
       }
     })
 
@@ -244,6 +251,45 @@ class ParticipantesService {
     })
 
     return mapInscricao(updated)
+  }
+
+  async getByIdCreator(idCreator: string): Promise<ParticipanteResponse[]> {
+    const participantes = await prisma.participante.findMany({
+      where: { creatorId: idCreator },
+      include: {
+        inscricoes: {
+          select: {
+            id: true,
+            eventoId: true,
+            participanteId: true,
+            checkIn: true,
+            dataInscricao: true,
+            evento: {
+              select: {
+                nome: true,
+                data: true,
+              }
+            }
+          }
+        }
+      }
+    })
+    
+    return participantes.map(p => ({
+      id: p.id,
+      nome: p.nome,
+      email: p.email,
+      creatorId: p.creatorId,
+      inscricoes: p.inscricoes.map(i => ({
+        id: i.id,
+        eventoId: i.eventoId,
+        participanteId: i.participanteId,
+        fezCheckin: i.checkIn,
+        dataInscricao: i.dataInscricao ? i.dataInscricao.toISOString() : new Date().toISOString(),
+        nomeEvento: i.evento?.nome,
+        dataEvento: i.evento?.data ? new Date(i.evento.data).toISOString() : undefined
+      }))
+    }));
   }
 }
 

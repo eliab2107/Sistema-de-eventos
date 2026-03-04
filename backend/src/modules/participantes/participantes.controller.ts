@@ -17,13 +17,13 @@ class ParticipantesController {
 
   async create(req: Request, res: Response) {
     try {
-      const { nome, email } = req.body
+      const { nome, email, creatorId } = req.body
 
-      if (!nome || !email) {
-        return res.status(400).json({ message: 'nome and email are required' })
+      if (!nome || !email || !creatorId) {
+        return res.status(400).json({ message: 'nome, email and creatorId are required' })
       }
 
-      const participante = await participantesService.create({ nome, email })
+      const participante = await participantesService.create({ nome, email, creatorId })
       res.status(201).json(participante)
     } catch (error: any) {
       if (error.statusCode) {
@@ -116,6 +116,19 @@ class ParticipantesController {
 
       const inscricao = await participantesService.checkin(id, eventoId, checkIn, userId!)
       res.json(inscricao)
+    } catch (error: any) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({ message: error.message })
+      }
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  async getByIdCreator(req: Request, res: Response) {
+    try {
+      const { idCraetor } = req.params as { idCraetor: string }
+      const participante = await participantesService.getByIdCreator(idCraetor)
+      res.json(participante)
     } catch (error: any) {
       if (error.statusCode) {
         return res.status(error.statusCode).json({ message: error.message })

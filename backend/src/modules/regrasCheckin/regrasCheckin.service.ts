@@ -16,7 +16,7 @@ interface RegraResponse {
   eventoId: string
   // nova propriedade para indicar o tipo associado
   tipoRegraId: string
-  tipoRegra?: TipoRegra
+  tipoRegra?: TipoRegra | undefined
 }
 
 interface CreateRegraRequest {

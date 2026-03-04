@@ -16,6 +16,7 @@ model User {
 
   /// eventos criados pelo usuário
   eventos   Evento[]
+  participantes Participante[]
 }
 
 model Evento {
@@ -38,7 +39,8 @@ model Participante {
   id         String      @id @default(uuid())
   nome       String
   email      String      @unique
-  
+  creatorId     String
+  creator       User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   // Um participante pode estar em vários eventos
   inscricoes Inscricao[]
 }

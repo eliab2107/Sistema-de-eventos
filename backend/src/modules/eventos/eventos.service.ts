@@ -98,6 +98,19 @@ class EventosService {
     return eventos.map(mapEvento)
   }
 
+  async listByCreator(idCreator: string, userId: string): Promise<EventoResponse[]> {
+    if (idCreator !== userId) {
+      throw { statusCode: 403, message: 'Forbidden' }
+    }
+
+    const eventos = await prisma.evento.findMany({
+      where: { creatorId: idCreator },
+      orderBy: { data: 'asc' }
+    })
+
+    return eventos.map(mapEvento)
+  }
+
   
 
   async getById(id: string, userId: string): Promise<EventoResponse> {

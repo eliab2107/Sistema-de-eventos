@@ -14,4 +14,6 @@ router.post('/:id/inscrever', authMiddleware, (req, res) => participantesControl
 router.put('/:id/transferir', authMiddleware, (req, res) => participantesController.transferir(req, res))
 router.put('/:id/checkin', authMiddleware, (req, res) => participantesController.checkin(req, res))
 
+router.get('/creator/:idCreator', (req, res) => participantesController.getByIdCreator(req, res))
+
 export default router

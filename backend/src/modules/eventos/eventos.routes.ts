@@ -6,6 +6,7 @@ const router = Router()
 
 // Protect todas as rotas de eventos
 router.get('/', authMiddleware, (req, res) => eventosController.list(req, res))
+router.get('/creator/:idCreator', authMiddleware, (req, res) => eventosController.getByCreator(req, res))
 router.get('/:id/completo', authMiddleware, (req, res) => eventosController.getCompleto(req, res))
 router.get('/:id', authMiddleware, (req, res) => eventosController.getById(req, res))
 router.post('/', authMiddleware, (req, res) => eventosController.create(req, res))

@@ -27,6 +27,22 @@ class EventosController {
     }
   }
 
+  async getByCreator(req: Request, res: Response) {
+    try {
+      const { idCreator } = req.params as { idCreator: string }
+      const authReq = req as AuthRequest
+      const userId = authReq.userId
+
+      const eventos = await eventosService.listByCreator(idCreator, userId!)
+      res.json(eventos)
+    } catch (error: any) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({ message: error.message })
+      }
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
   async getById(req: Request, res: Response) {
     try {
       const { id } = req.params as { id: string }
